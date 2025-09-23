@@ -1,0 +1,44 @@
+<!DOCTYPE html> 
+<html xmlns:th="http://www.thymeleaf.org"> 
+<head> 
+    <meta charset="UTF-8" /> 
+    <title>Category List</title> 
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+    <link th:href="@{/css/bootstrap.css}" rel="stylesheet" /> 
+    <script th:src="@{/js/bootstrap.js}"></script> 
+</head> 
+<body> 
+
+    <a th:href="/admin/categories/add">Add New Category</a>
+
+
+    <div th:if="${message != null}">
+        <p th:text="${message}"></p>
+    </div>
+
+    <table border="1" width="100%" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Images</th>
+                <th>Category Name</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cate, stt : ${list}">
+                <td th:text="${stt.index + 1}"></td>
+                <td th:text="${cate.images}"></td>
+                <td th:text="${cate.name}"></td>
+                <td th:text="${cate.status == 1 ? 'Dang hoat dong' : 'Khoa'}"></td>
+                <td>
+                    <a th:href="@{'/admin/categories/edit/' + ${cate.id}}" class="btn btn-warning">Edit</a>
+                    <a th:href="@{'/admin/categories/delete/' + ${cate.id}}" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+</body> 
+</html>
