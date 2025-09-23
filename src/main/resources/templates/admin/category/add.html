@@ -2,20 +2,20 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8" />
-    <title>Product</title>
+    <title>Category</title>
     <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#product-form').submit(function(e) {
+            $('#category-form').submit(function(e) {
                 e.preventDefault();
 
                 let formData = new FormData(this);
-                let url = '/api/product';
+                let url = '/api/category';
                 let method = 'POST';
                 const isEdit = $('#isEdit').val() === 'true';
                 if (isEdit) {
-                    url += '/' + $('#productId').val();
+                    url += '/' + $('#categoryId').val();
                     method = 'PUT';
                 }
 
@@ -27,11 +27,11 @@
                     contentType: false,
                     success: function(response) {
                         alert(response.message);
-                        window.location.href = '/admin/products';
+                        window.location.href = '/admin/categories';
                     },
                     error: function(error) {
-                        console.error("Error saving product", error);
-                        alert("Error: " + error.responseJSON.message);
+                        console.error("Error saving category", error);
+                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
                     }
                 });
             });
@@ -41,58 +41,28 @@
 <body>
     <header th:replace="~{admin/fragments/header :: header}"></header>
     <main layout:fragment="content">
-        <h1>Add/Edit Product</h1>
-        <form id="product-form" enctype="multipart/form-data">
-            <input type="hidden" id="isEdit" th:value="${product != null and product.productId != null ? 'true' : 'false'}" />
-            <input type="hidden" id="productId" th:value="${product != null ? product.productId : ''}" />
+        <h1>Add/Edit Category</h1>
+        <form id="category-form" enctype="multipart/form-data">
+            <input type="hidden" id="isEdit" th:value="${category != null and category.categoryId != null ? 'true' : 'false'}" />
+            <input type="hidden" id="categoryId" th:value="${category != null ? category.categoryId : ''}" />
 
             <div class="form-group">
-                <label for="productName">Product Name</label>
-                <input type="text" id="productName" name="productName" class="form-control" th:value="${product != null ? product.productName : ''}" />
+                <label for="categoryName">Category Name</label>
+                <input type="text" id="categoryName" name="categoryName" class="form-control" th:value="${category != null ? category.categoryName : ''}" required />
             </div>
 
             <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" id="quantity" name="quantity" class="form-control" th:value="${product != null ? product.quantity : ''}" />
-            </div>
-
-            <div class="form-group">
-                <label for="unitPrice">Unit Price</label>
-                <input type="number" id="unitPrice" name="unitPrice" class="form-control" th:value="${product != null ? product.unitPrice : ''}" />
-            </div>
-
-            <div class="form-group">
-                <label for="images">Images</label>
-                <input type="file" id="images" name="imagesFile" class="form-control" />
-            </div>
-
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" th:text="${product != null ? product.description : ''}"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="discount">Discount</label>
-                <input type="number" id="discount" name="discount" class="form-control" th:value="${product != null ? product.discount : ''}" />
-            </div>
-
-            <div class="form-group">
-                <label for="categoryId">Category</label>
-                <select id="categoryId" name="categoryId" class="form-control">
-                    </select>
-            </div>
-
-            <div class="form-group">
-                <p>Status</p>
-                <input type="radio" id="status-active" name="status" value="1" th:checked="${product != null and product.status == 1}" />
-                <label for="status-active">Active</label>
-                <input type="radio" id="status-inactive" name="status" value="0" th:checked="${product != null and product.status == 0}" />
-                <label for="status-inactive">Inactive</label>
+                <label for="icon">Icon</label>
+                <input type="file" id="icon" name="icon" class="form-control" accept="image/*" />
+                <small class="form-text text-muted" th:if="${category != null and category.icon != null}">
+                    Current icon: <span th:text="${category.icon}"></span>
+                </small>
             </div>
 
             <button type="submit" class="btn btn-primary">Save</button>
+            <a th:href="@{/admin/categories}" class="btn btn-secondary">Cancel</a>
         </form>
     </main>
-    <footer th:replace="~{admin/fragments/footer :: footer}</footer>
+    <footer th:replace="~{admin/fragments/footer :: footer}"></footer>
 </body>
 </html>
