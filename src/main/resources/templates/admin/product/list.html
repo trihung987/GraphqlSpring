@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="#{me.truong.value.listProduct}">Product List</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- CSS -->
+    <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
+    <!-- JavaScript -->
+    <script th:src="@{/js/bootstrap.js}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function deleteProduct(id, name) {
+            if (confirm('Are you sure you want to delete product: ' + name + '?')) {
+                $.ajax({
+                    url: '/api/product/' + id,
+                    method: 'DELETE',
+                    success: function(response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function(error) {
+                        console.error("Error deleting product", error);
+                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
+                    }
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <header th:replace="~{admin/fragments/header :: header}"></header>
+
+    <main layout:fragment="content">
+        <h1>Product Management</h1>
+        <a th:href="@{/admin/products/add}" class="btn btn-primary">Add New Product</a>
+        <br><br>
+
+        <!-- Display message -->
+        <p th:if="${param.error != null}" class="alert alert-danger">
+            <span th:text="${param.error}"></span>
+        </p>
+        <!-- End Display message -->
+
+        <!-- Filter by Category -->
+        <form th:action="@{/admin/products}" method="get">
+            <div class="form-group">
+                <label for="categoryId">Filter by Category:</label>
+                <select name="categoryId" id="categoryId" class="form-control" style="width: 200px; display: inline-block;">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.categoryId}" 
+                            th:text="${cat.categoryName}" 
+                            th:selected="${categoryId != null && categoryId == cat.categoryId}">
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-info">Filter</button>
+            </div>
+        </form>
+        <br>
+
+        <!-- Check if there are no products -->
+        <p th:if="${productPage == null || productPage.content.size() == 0}">No Products Found</p>
+
+        <!-- Display product list if present -->
+        <div th:if="${productPage != null && productPage.content.size() > 0}">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Discount</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="product : ${productPage.content}">
+                        <td th:text="${product.productId}">1</td>
+                        <td>
+                            <span th:if="${product.images != null}" th:text="${product.images}">Image</span>
+                            <span th:if="${product.images == null}">No Image</span>
+                        </td>
+                        <td th:text="${product.productName}">Product Name</td>
+                        <td th:text="${product.quantity}">Quantity</td>
+                        <td th:text="${product.unitPrice}">Price</td>
+                        <td th:text="${product.discount}">Discount</td>
+                        <td th:text="${product.category != null ? product.category.categoryName : 'No Category'}">Category</td>
+                        <td>
+                            <span th:if="${product.status == 1}" class="badge badge-success">Active</span>
+                            <span th:if="${product.status == 0}" class="badge badge-danger">Inactive</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/admin/products/edit/{id}(id=${product.productId})}" class="btn btn-warning btn-sm">Edit</a>
+                            <button onclick="deleteProduct([[${product.productId}]], '[[${product.productName}]]')" 
+                                    class="btn btn-danger btn-sm">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Page size selection -->
+        <form th:action="@{/admin/products}" method="get">
+            <input type="hidden" name="categoryId" th:value="${categoryId}" />
+            Page size: <select name="size" id="size" th:onchange="this.form.submit()">
+                <option th:value="5" th:selected="${productPage != null && productPage.size == 5}">5</option>
+                <option th:value="10" th:selected="${productPage != null && productPage.size == 10}">10</option>
+                <option th:value="15" th:selected="${productPage != null && productPage.size == 15}">15</option>
+                <option th:value="20" th:selected="${productPage != null && productPage.size == 20}">20</option>
+            </select>
+        </form>
+        <br>
+
+        <!-- Pagination -->
+        <div th:if="${productPage != null && productPage.totalPages > 1}">
+            <ul class="pagination">
+                <li th:each="pageNumber : ${pageNumbers}"
+                    th:classappend="${pageNumber == productPage.number + 1} ? 'page-item active' : 'page-item'">
+                    <a th:href="@{/admin/products(categoryId=${categoryId},size=${productPage.size},page=${pageNumber - 1})}"
+                       th:text="${pageNumber}"
+                       class="page-link">
+                        Page</a>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <footer th:replace="~{admin/fragments/footer :: footer}"></footer>
+</body>
+</html>
