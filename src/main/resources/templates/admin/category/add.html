@@ -6,6 +6,11 @@
     <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        // Fallback if jQuery doesn't load
+        if (!window.jQuery) {
+            console.warn('jQuery failed to load from CDN, functionality will be limited');
+        }
+        
         $(document).ready(function() {
             $('#category-form').submit(function(e) {
                 e.preventDefault();
