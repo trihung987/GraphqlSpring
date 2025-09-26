@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8" />
+    <title>Product - GraphQL Version</title>
+
+    <!-- CSS -->
+    <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Load categories using GraphQL
+            loadCategoriesGraphQL();
+
+            // Submit form add/edit product using GraphQL
+            $('#product-form').submit(function (e) {
+                e.preventDefault();
+                
+                const isEdit = $('#isEdit').val() === 'true';
+                const formData = new FormData(this);
+                
+                if (isEdit) {
+                    updateProductGraphQL(formData);
+                } else {
+                    createProductGraphQL(formData);
+                }
+            });
+        });
+
+        /** Load categories using GraphQL */
+        function loadCategoriesGraphQL() {
+            const query = `
+                query {
+                    categories {
+                        content {
+                            categoryId
+                            categoryName
+                        }
+                    }
+                }
+            `;
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: query }),
+                success: function (response) {
+                    const categorySelect = $('#categoryId');
+                    categorySelect.empty()
+                                  .append('<option value="">Select Category</option>');
+
+                    if (response.data && response.data.categories && response.data.categories.content) {
+                        response.data.categories.content.forEach(function (category) {
+                            const selected =
+                                $('#selectedCategoryId').val() == category.categoryId ? 'selected' : '';
+                            categorySelect.append(
+                                `<option value="${category.categoryId}" ${selected}>
+                                    ${category.categoryName}
+                                 </option>`
+                            );
+                        });
+                    }
+                },
+                error: function (error) {
+                    console.error("Error loading categories", error);
+                    alert("Error loading categories: " + error.responseText);
+                }
+            });
+        }
+
+        /** Create product using GraphQL */
+        function createProductGraphQL(formData) {
+            const mutation = `
+                mutation CreateProduct($input: ProductInput!) {
+                    createProduct(input: $input) {
+                        productId
+                        productName
+                        unitPrice
+                        category {
+                            categoryName
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                input: {
+                    productName: formData.get('productName'),
+                    quantity: parseInt(formData.get('quantity')),
+                    unitPrice: parseFloat(formData.get('unitPrice')),
+                    description: formData.get('description'),
+                    discount: parseFloat(formData.get('discount')),
+                    status: parseInt(formData.get('status')),
+                    categoryId: formData.get('categoryId')
+                }
+            };
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    query: mutation,
+                    variables: variables
+                }),
+                success: function (response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Product created successfully!");
+                        window.location.href = '/admin/products';
+                    }
+                },
+                error: function (error) {
+                    console.error("Error creating product", error);
+                    alert("Error creating product: " + error.responseText);
+                }
+            });
+        }
+
+        /** Update product using GraphQL */
+        function updateProductGraphQL(formData) {
+            const mutation = `
+                mutation UpdateProduct($id: ID!, $input: ProductUpdateInput!) {
+                    updateProduct(id: $id, input: $input) {
+                        productId
+                        productName
+                        unitPrice
+                        category {
+                            categoryName
+                        }
+                    }
+                }
+            `;
+
+            const variables = {
+                id: $('#productId').val(),
+                input: {
+                    productName: formData.get('productName'),
+                    quantity: parseInt(formData.get('quantity')),
+                    unitPrice: parseFloat(formData.get('unitPrice')),
+                    description: formData.get('description'),
+                    discount: parseFloat(formData.get('discount')),
+                    status: parseInt(formData.get('status')),
+                    categoryId: formData.get('categoryId')
+                }
+            };
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    query: mutation,
+                    variables: variables
+                }),
+                success: function (response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Product updated successfully!");
+                        window.location.href = '/admin/products';
+                    }
+                },
+                error: function (error) {
+                    console.error("Error updating product", error);
+                    alert("Error updating product: " + error.responseText);
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+<header th:replace="~{admin/fragments/header :: header}"></header>
+
+<main layout:fragment="content" class="container my-4">
+    <h1 class="mb-4">Add / Edit Product (GraphQL Version)</h1>
+
+    <form id="product-form" class="needs-validation">
+
+        <!-- Hidden fields -->
+        <input type="hidden" id="isEdit"
+               th:value="${product != null and product.productId != null ? 'true' : 'false'}" />
+        <input type="hidden" id="productId"
+               th:value="${product != null ? product.productId : ''}" />
+        <input type="hidden" id="selectedCategoryId"
+               th:value="${product != null and product.category != null ? product.category.categoryId : ''}" />
+
+        <!-- Product Name -->
+        <div class="form-group mb-3">
+            <label for="productName">Product Name <span class="text-danger">*</span></label>
+            <input type="text" id="productName" name="productName"
+                   class="form-control"
+                   th:value="${product != null ? product.productName : ''}" required />
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group mb-3">
+            <label for="quantity">Quantity <span class="text-danger">*</span></label>
+            <input type="number" id="quantity" name="quantity"
+                   class="form-control"
+                   th:value="${product != null ? product.quantity : 0}" required />
+        </div>
+
+        <!-- Unit Price -->
+        <div class="form-group mb-3">
+            <label for="unitPrice">Unit Price <span class="text-danger">*</span></label>
+            <input type="number" step="0.01" id="unitPrice" name="unitPrice"
+                   class="form-control"
+                   th:value="${product != null ? product.unitPrice : 0}" required />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group mb-3">
+            <label for="description">Description</label>
+            <textarea id="description" name="description"
+                      class="form-control"
+                      th:text="${product != null ? product.description : ''}" required>
+            </textarea>
+        </div>
+
+        <!-- Discount -->
+        <div class="form-group mb-3">
+            <label for="discount">Discount</label>
+            <input type="number" step="0.01" id="discount" name="discount"
+                   class="form-control"
+                   th:value="${product != null ? product.discount : 0}" />
+        </div>
+
+        <!-- Category Select -->
+        <div class="form-group mb-3">
+            <label for="categoryId">Category <span class="text-danger">*</span></label>
+            <select id="categoryId" name="categoryId" class="form-control" required>
+                <option value="">Loading categories...</option>
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group mb-3">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="form-control">
+                <option value="1" th:selected="${product != null && product.status == 1}">Active</option>
+                <option value="0" th:selected="${product != null && product.status == 0}">Inactive</option>
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <button type="submit" class="btn btn-primary">Save Product</button>
+        <a th:href="@{/admin/products}" class="btn btn-secondary">Cancel</a>
+
+    </form>
+
+    <div class="mt-4">
+        <h5>Note:</h5>
+        <p>This is the GraphQL version of the product form. File upload functionality for images has been temporarily disabled in this demo version.</p>
+        <p>To see the difference, compare with the original REST API form.</p>
+    </div>
+</main>
+
+<footer th:replace="~{admin/fragments/footer :: footer}"></footer>
+</body>
+</html>
