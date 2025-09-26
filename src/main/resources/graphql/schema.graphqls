@@ -26,20 +26,12 @@ type ProductPage {
     content: [Product!]!
     totalElements: Int!
     totalPages: Int!
-    size: Int!
-    number: Int!
-    first: Boolean!
-    last: Boolean!
 }
 
 type CategoryPage {
     content: [Category!]!
     totalElements: Int!
     totalPages: Int!
-    size: Int!
-    number: Int!
-    first: Boolean!
-    last: Boolean!
 }
 
 input ProductInput {
@@ -72,11 +64,11 @@ input CategoryUpdateInput {
 
 type Query {
     # Product queries
-    products(page: Int = 0, size: Int = 10, sort: String = "productId", direction: String = "ASC", categoryId: ID): ProductPage!
+    products(page: Int = 0, size: Int = 10, categoryId: ID): ProductPage!
     product(id: ID!): Product
     
     # Category queries
-    categories(page: Int = 0, size: Int = 10, sort: String = "categoryId", direction: String = "ASC"): CategoryPage!
+    categories(page: Int = 0, size: Int = 10, name: String): CategoryPage!
     category(id: ID!): Category
 }
 
