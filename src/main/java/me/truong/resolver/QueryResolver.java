@@ -23,44 +23,45 @@ public class QueryResolver {
     @Autowired
     private ICategoryService categoryService;
 
-    @QueryMapping
-    public Page<Product> products(
-            @Argument int page,
-            @Argument int size,
-            @Argument String sort,
-            @Argument String direction,
-            @Argument Long categoryId) {
-        
-        Sort.Direction dir = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
-        
-        if (categoryId != null) {
-            return productService.findByCategoryId(categoryId, pageable);
-        } else {
-            return productService.findAll(pageable);
-        }
-    }
+    // Migrated to CatalogGraphQLController for better pagination format
+    // @QueryMapping
+    // public Page<Product> products(
+    //         @Argument int page,
+    //         @Argument int size,
+    //         @Argument String sort,
+    //         @Argument String direction,
+    //         @Argument Long categoryId) {
+    //     
+    //     Sort.Direction dir = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+    //     Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
+    //     
+    //     if (categoryId != null) {
+    //         return productService.findByCategoryId(categoryId, pageable);
+    //     } else {
+    //         return productService.findAll(pageable);
+    //     }
+    // }
 
-    @QueryMapping
-    public Product product(@Argument Long id) {
-        return productService.findById(id).orElse(null);
-    }
+    // @QueryMapping
+    // public Product product(@Argument Long id) {
+    //     return productService.findById(id).orElse(null);
+    // }
 
-    @QueryMapping
-    public Page<Category> categories(
-            @Argument int page,
-            @Argument int size,
-            @Argument String sort,
-            @Argument String direction) {
-        
-        Sort.Direction dir = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
-        
-        return categoryService.findAll(pageable);
-    }
+    // @QueryMapping
+    // public Page<Category> categories(
+    //         @Argument int page,
+    //         @Argument int size,
+    //         @Argument String sort,
+    //         @Argument String direction) {
+    //     
+    //     Sort.Direction dir = direction.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
+    //     Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
+    //     
+    //     return categoryService.findAll(pageable);
+    // }
 
-    @QueryMapping
-    public Category category(@Argument Long id) {
-        return categoryService.findById(id).orElse(null);
-    }
+    // @QueryMapping
+    // public Category category(@Argument Long id) {
+    //     return categoryService.findById(id).orElse(null);
+    // }
 }
