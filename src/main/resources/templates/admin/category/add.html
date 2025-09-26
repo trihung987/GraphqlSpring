@@ -15,32 +15,113 @@
             $('#category-form').submit(function(e) {
                 e.preventDefault();
 
-                let formData = new FormData(this);
-                let url = '/api/category';
-                let method = 'POST';
+                const formData = new FormData(this);
                 const isEdit = $('#isEdit').val() === 'true';
+                
                 if (isEdit) {
-                    url += '/' + $('#categoryId').val();
-                    method = 'PUT';
+                    updateCategoryGraphQL(formData);
+                } else {
+                    createCategoryGraphQL(formData);
                 }
-
-                $.ajax({
-                    url: url,
-                    method: method,
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        alert(response.message);
-                        window.location.href = '/admin/categories';
-                    },
-                    error: function(error) {
-                        console.error("Error saving category", error);
-                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
-                    }
-                });
             });
         });
+
+        /** Create category using GraphQL */
+        function createCategoryGraphQL(formData) {
+            const mutation = `
+                mutation createCategory($input: CategoryInput!, $icon: Upload) {
+                    createCategory(input: $input, icon: $icon) {
+                        categoryId
+                        categoryName
+                        icon
+                    }
+                }
+            `;
+
+            const variables = {
+                input: {
+                    categoryName: formData.get('categoryName')
+                }
+            };
+
+            const graphqlFormData = new FormData();
+            graphqlFormData.append('query', mutation);
+            graphqlFormData.append('variables', JSON.stringify(variables));
+            
+            const iconFile = formData.get('icon');
+            if (iconFile && iconFile.size > 0) {
+                graphqlFormData.append('icon', iconFile);
+            }
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                data: graphqlFormData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Category created successfully!");
+                        window.location.href = '/admin/categories';
+                    }
+                },
+                error: function(error) {
+                    console.error("Error creating category", error);
+                    alert("Error creating category: " + error.responseText);
+                }
+            });
+        }
+
+        /** Update category using GraphQL */
+        function updateCategoryGraphQL(formData) {
+            const mutation = `
+                mutation updateCategory($id: ID!, $input: CategoryUpdateInput!, $icon: Upload) {
+                    updateCategory(id: $id, input: $input, icon: $icon) {
+                        categoryId
+                        categoryName
+                        icon
+                    }
+                }
+            `;
+
+            const variables = {
+                id: $('#categoryId').val(),
+                input: {
+                    categoryName: formData.get('categoryName')
+                }
+            };
+
+            const graphqlFormData = new FormData();
+            graphqlFormData.append('query', mutation);
+            graphqlFormData.append('variables', JSON.stringify(variables));
+            
+            const iconFile = formData.get('icon');
+            if (iconFile && iconFile.size > 0) {
+                graphqlFormData.append('icon', iconFile);
+            }
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                data: graphqlFormData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Category updated successfully!");
+                        window.location.href = '/admin/categories';
+                    }
+                },
+                error: function(error) {
+                    console.error("Error updating category", error);
+                    alert("Error updating category: " + error.responseText);
+                }
+            });
+        }
     </script>
 </head>
 <body>

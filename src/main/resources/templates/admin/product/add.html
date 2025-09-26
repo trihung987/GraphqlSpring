@@ -13,56 +13,53 @@
 
     <script>
         $(document).ready(function () {
-            // Gọi API để load category ngay khi trang sẵn sàng
-            loadCategories();
+            // Load categories using GraphQL
+            loadCategoriesGraphQL();
 
-            // Submit form add/edit product
+            // Submit form add/edit product using GraphQL
             $('#product-form').submit(function (e) {
                 e.preventDefault();
-
+                
+                const isEdit = $('#isEdit').val() === 'true';
                 const formData = new FormData(this);
-                let   url      = '/api/product';
-                let   method   = 'POST';
-
-                if ($('#isEdit').val() === 'true') {
-                    url    += '/' + $('#productId').val();
-                    method  = 'PUT';
+                
+                if (isEdit) {
+                    updateProductGraphQL(formData);
+                } else {
+                    createProductGraphQL(formData);
                 }
-
-                $.ajax({
-                    url: url,
-                    method: method,
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function (response) {
-                        alert(response.message);
-                        window.location.href = '/admin/products';
-                    },
-                    error: function (error) {
-                        console.error("Error saving product", error);
-                        alert("Error: " +
-                            (error.responseJSON ? error.responseJSON.message : error.statusText));
-                    }
-                });
             });
         });
 
-        /** Load danh sách category và gán vào <select> */
-        function loadCategories() {
+        /** Load categories using GraphQL */
+        function loadCategoriesGraphQL() {
+            const query = `
+                query {
+                    categories(page: 0, size: 100) {
+                        content {
+                            categoryId
+                            categoryName
+                        }
+                    }
+                }
+            `;
+
             $.ajax({
-                url: '/api/category',
-                method: 'GET',
+                url: '/graphql',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    query: query
+                }),
                 success: function (response) {
                     const categorySelect = $('#categoryId');
                     categorySelect.empty()
                                   .append('<option value="">Select Category</option>');
 
-                    console.log(response); // kiểm tra cấu trúc JSON
-
-                    // API trả { success, message, data(Page<Category>) }
-                    if (response.data && response.data.content) {
-                        response.data.content.forEach(function (category) {
+                    if (response.data && response.data.categories && response.data.categories.content) {
+                        response.data.categories.content.forEach(function (category) {
                             const selected =
                                 $('#selectedCategoryId').val() == category.categoryId ? 'selected' : '';
                             categorySelect.append(
@@ -75,6 +72,126 @@
                 },
                 error: function (error) {
                     console.error("Error loading categories", error);
+                    alert("Error loading categories: " + error.responseText);
+                }
+            });
+        }
+
+        /** Create product using GraphQL */
+        function createProductGraphQL(formData) {
+            const mutation = `
+                mutation createProduct($input: ProductInput!, $image: Upload) {
+                    createProduct(input: $input, image: $image) {
+                        productId
+                        productName
+                        quantity
+                        unitPrice
+                        description
+                        discount
+                        status
+                        images
+                    }
+                }
+            `;
+
+            const variables = {
+                input: {
+                    productName: formData.get('productName'),
+                    quantity: parseInt(formData.get('quantity')),
+                    unitPrice: parseFloat(formData.get('unitPrice')),
+                    description: formData.get('description'),
+                    discount: parseFloat(formData.get('discount')),
+                    status: parseInt(formData.get('status')),
+                    categoryId: formData.get('categoryId')
+                }
+            };
+
+            const graphqlFormData = new FormData();
+            graphqlFormData.append('query', mutation);
+            graphqlFormData.append('variables', JSON.stringify(variables));
+            
+            const imageFile = formData.get('images');
+            if (imageFile && imageFile.size > 0) {
+                graphqlFormData.append('image', imageFile);
+            }
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                data: graphqlFormData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Product created successfully!");
+                        window.location.href = '/admin/products';
+                    }
+                },
+                error: function (error) {
+                    console.error("Error creating product", error);
+                    alert("Error creating product: " + error.responseText);
+                }
+            });
+        }
+
+        /** Update product using GraphQL */
+        function updateProductGraphQL(formData) {
+            const mutation = `
+                mutation updateProduct($id: ID!, $input: ProductUpdateInput!, $image: Upload) {
+                    updateProduct(id: $id, input: $input, image: $image) {
+                        productId
+                        productName
+                        quantity
+                        unitPrice
+                        description
+                        discount
+                        status
+                        images
+                    }
+                }
+            `;
+
+            const variables = {
+                id: $('#productId').val(),
+                input: {
+                    productName: formData.get('productName'),
+                    quantity: parseInt(formData.get('quantity')),
+                    unitPrice: parseFloat(formData.get('unitPrice')),
+                    description: formData.get('description'),
+                    discount: parseFloat(formData.get('discount')),
+                    status: parseInt(formData.get('status')),
+                    categoryId: formData.get('categoryId')
+                }
+            };
+
+            const graphqlFormData = new FormData();
+            graphqlFormData.append('query', mutation);
+            graphqlFormData.append('variables', JSON.stringify(variables));
+            
+            const imageFile = formData.get('images');
+            if (imageFile && imageFile.size > 0) {
+                graphqlFormData.append('image', imageFile);
+            }
+
+            $.ajax({
+                url: '/graphql',
+                method: 'POST',
+                data: graphqlFormData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.errors) {
+                        alert("Error: " + response.errors[0].message);
+                    } else {
+                        alert("Product updated successfully!");
+                        window.location.href = '/admin/products';
+                    }
+                },
+                error: function (error) {
+                    console.error("Error updating product", error);
+                    alert("Error updating product: " + error.responseText);
                 }
             });
         }
