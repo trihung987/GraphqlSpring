@@ -1,134 +1,245 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:inline="text">
 <head>
     <meta charset="UTF-8" />
-    <title th:text="#{me.truong.value.listProduct}">Product List</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <!-- CSS -->
+
     <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
-    <!-- JavaScript -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script th:src="@{/js/bootstrap.js}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+     <title th:text="#{me.truong.value.listProduct}">Product List</title>
+    
+
+    <style>
+        body {
+            background-color: #f0f2f5; /* A softer background color */
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            color: #495057;
+        }
+        h1.page-title {
+            font-size: 2rem; /* Larger font size */
+            font-weight: 700; /* Bolder */
+            color: #212529;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            border-radius: 1.25rem;
+            box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.08); /* More subtle shadow */
+            padding: 2.5rem;
+        }
+        .table {
+            border-radius: 1rem;
+            overflow: hidden; /* Ensures rounded corners on the table */
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table img {
+            border-radius: 0.5rem;
+            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+        }
+        .table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background-color: #2c3e50; /* Darker header */
+            color: #ecf0f1;
+            border: none;
+            padding: 1rem;
+        }
+        .table tbody tr {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .table tbody tr:hover {
+            background-color: #e9ecef; /* Subtle hover effect */
+        }
+        .table tbody td {
+            vertical-align: middle; /* Center content vertically */
+            padding: 1rem;
+        }
+        .btn {
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.1);
+        }
+        .pagination .page-link {
+            border-radius: 0.5rem;
+            margin: 0 0.25rem;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+            color: #0056b3;
+        }
+        /* Custom styles for right-aligned columns */
+        .table .text-right {
+            text-align: right;
+        }
+    </style>
+
     <script>
+        // Ajax xóa product
         function deleteProduct(id, name) {
             if (confirm('Are you sure you want to delete product: ' + name + '?')) {
                 $.ajax({
                     url: '/api/product/' + id,
                     method: 'DELETE',
-                    success: function(response) {
+                    success: function (response) {
                         alert(response.message);
                         location.reload();
                     },
-                    error: function(error) {
+                    error: function (error) {
                         console.error("Error deleting product", error);
                         alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
                     }
                 });
             }
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".delete-btn").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    deleteProduct(id, name);
+                });
+            });
+        });
     </script>
 </head>
+
 <body>
-    <header th:replace="~{admin/fragments/header :: header}"></header>
+<header th:replace="~{admin/fragments/header :: header}"></header>
 
-    <main layout:fragment="content">
-        <h1>Product Management</h1>
-        <a th:href="@{/admin/products/add}" class="btn btn-primary">Add New Product</a>
-        <br><br>
+<main layout:fragment="content" class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Product Management</h1>
+        <div>
+            <a href="/admin/categories" class="btn btn-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a th:href="@{/admin/products/add}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add New Product
+            </a>
+        </div>
+    </div>
 
-        <!-- Display message -->
-        <p th:if="${param.error != null}" class="alert alert-danger">
+    <div class="card p-4 mb-4">
+        <p th:if="${param.error != null}" class="alert alert-danger mb-4" role="alert">
             <span th:text="${param.error}"></span>
         </p>
-        <!-- End Display message -->
 
-        <!-- Filter by Category -->
-        <form th:action="@{/admin/products}" method="get">
-            <div class="form-group">
-                <label for="categoryId">Filter by Category:</label>
-                <select name="categoryId" id="categoryId" class="form-control" style="width: 200px; display: inline-block;">
+        <form th:action="@{/admin/products}" method="get" class="row g-3 align-items-end mb-4">
+            <div class="col-auto">
+                <label for="categoryId" class="form-label">Filter by Category</label>
+                <select name="categoryId" id="categoryId" class="form-select form-select-lg">
                     <option value="">All Categories</option>
-                    <option th:each="cat : ${categories}" th:value="${cat.categoryId}" 
-                            th:text="${cat.categoryName}" 
+                    <option th:each="cat : ${categories}" th:value="${cat.categoryId}"
+                            th:text="${cat.categoryName}"
                             th:selected="${categoryId != null && categoryId == cat.categoryId}">
                     </option>
                 </select>
-                <button type="submit" class="btn btn-info">Filter</button>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-info btn-lg">Filter</button>
             </div>
         </form>
-        <br>
+    </div>
 
-        <!-- Check if there are no products -->
-        <p th:if="${productPage == null || productPage.content.size() == 0}">No Products Found</p>
+    <div class="card p-4">
+        <p th:if="${productPage == null || productPage.content.size() == 0}" class="text-muted text-center py-5">
+            No Products Found
+        </p>
 
-        <!-- Display product list if present -->
         <div th:if="${productPage != null && productPage.content.size() > 0}">
-            <table class="table table-bordered table-striped">
-                <thead>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
-                        <th>Image</th>
+                        <th class="text-center">ID</th>
+                        <th class="text-center">Image</th>
                         <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Discount</th>
+                        <th class="text-right">Quantity</th>
+                        <th class="text-right">Unit Price</th>
+                        <th class="text-right">Discount</th>
                         <th>Category</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" style="width: 250px;">Action</th>
                     </tr>
-                </thead>
-                <tbody>
+                    </thead>
+                    <tbody>
                     <tr th:each="product : ${productPage.content}">
-                        <td th:text="${product.productId}">1</td>
-                        <td>
-                            <span th:if="${product.images != null}" th:text="${product.images}">Image</span>
+                        <td class="text-center" th:text="${product.productId}"></td>
+                        <td class="text-center">
+                            <span th:if="${product.images != null}">
+                                <img th:src="@{/imageResources/{file}(file=${product.images})}"
+                                     alt="product image"
+                                     style="max-width: 80px; max-height: 80px; object-fit: cover;">
+                            </span>
                             <span th:if="${product.images == null}">No Image</span>
                         </td>
-                        <td th:text="${product.productName}">Product Name</td>
-                        <td th:text="${product.quantity}">Quantity</td>
-                        <td th:text="${product.unitPrice}">Price</td>
-                        <td th:text="${product.discount}">Discount</td>
-                        <td th:text="${product.category != null ? product.category.categoryName : 'No Category'}">Category</td>
-                        <td>
-                            <span th:if="${product.status == 1}" class="badge badge-success">Active</span>
-                            <span th:if="${product.status == 0}" class="badge badge-danger">Inactive</span>
+                        <td th:text="${product.productName}"></td>
+                        <td class="text-right" th:text="${product.quantity}"></td>
+                        <td class="text-right" th:text="${product.unitPrice}"></td>
+                        <td class="text-right" th:text="${product.discount}"></td>
+                        <td th:text="${product.category != null ? product.category.categoryName : 'No Category'}"></td>
+                        <td class="text-center">
+                            <span th:if="${product.status == 1}" class="badge bg-success">Active</span>
+                            <span th:if="${product.status == 0}" class="badge bg-danger">Inactive</span>
                         </td>
-                        <td>
-                            <a th:href="@{/admin/products/edit/{id}(id=${product.productId})}" class="btn btn-warning btn-sm">Edit</a>
-                            <button onclick="deleteProduct([[${product.productId}]], '[[${product.productName}]]')" 
-                                    class="btn btn-danger btn-sm">Delete</button>
+                        <td class="text-center">
+                            <a th:href="@{/admin/products/edit/{id}(id=${product.productId})}"
+                               class="btn btn-warning btn-sm me-2">Edit</a>
+                            <button class="btn btn-danger btn-sm delete-btn"
+                                    th:data-id="${product.productId}"
+                                    th:data-name="${product.productName}">Delete</button>
                         </td>
                     </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Page size selection -->
-        <form th:action="@{/admin/products}" method="get">
-            <input type="hidden" name="categoryId" th:value="${categoryId}" />
-            Page size: <select name="size" id="size" th:onchange="this.form.submit()">
-                <option th:value="5" th:selected="${productPage != null && productPage.size == 5}">5</option>
-                <option th:value="10" th:selected="${productPage != null && productPage.size == 10}">10</option>
-                <option th:value="15" th:selected="${productPage != null && productPage.size == 15}">15</option>
-                <option th:value="20" th:selected="${productPage != null && productPage.size == 20}">20</option>
-            </select>
-        </form>
-        <br>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <form th:action="@{/admin/products}" method="get" class="d-flex align-items-center">
+                <input type="hidden" name="categoryId" th:value="${categoryId}" />
+                <label for="size" class="form-label mb-0 me-2">Page size:</label>
+                <select name="size" id="size" class="form-select w-auto"
+                        th:onchange="this.form.submit()">
+                    <option th:value="5"  th:selected="${productPage != null && productPage.size == 5}">5</option>
+                    <option th:value="10" th:selected="${productPage != null && productPage.size == 10}">10</option>
+                    <option th:value="15" th:selected="${productPage != null && productPage.size == 15}">15</option>
+                    <option th:value="20" th:selected="${productPage != null && productPage.size == 20}">20</option>
+                </select>
+            </form>
 
-        <!-- Pagination -->
-        <div th:if="${productPage != null && productPage.totalPages > 1}">
-            <ul class="pagination">
-                <li th:each="pageNumber : ${pageNumbers}"
-                    th:classappend="${pageNumber == productPage.number + 1} ? 'page-item active' : 'page-item'">
-                    <a th:href="@{/admin/products(categoryId=${categoryId},size=${productPage.size},page=${pageNumber - 1})}"
-                       th:text="${pageNumber}"
-                       class="page-link">
-                        Page</a>
-                </li>
-            </ul>
+            <div th:if="${productPage != null && productPage.totalPages > 1}">
+                <ul class="pagination mb-0">
+                    <li th:each="pageNumber : ${pageNumbers}"
+                        th:classappend="${pageNumber == productPage.number + 1} ? 'page-item active' : 'page-item'">
+                        <a class="page-link"
+                           th:href="@{/admin/products(categoryId=${categoryId},size=${productPage.size},page=${pageNumber - 1})}"
+                           th:text="${pageNumber}"></a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <footer th:replace="~{admin/fragments/footer :: footer}"></footer>
+<footer th:replace="~{admin/fragments/footer :: footer}"></footer>
 </body>
 </html>

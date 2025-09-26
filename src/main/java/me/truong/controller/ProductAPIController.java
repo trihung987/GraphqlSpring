@@ -52,7 +52,7 @@ public class ProductAPIController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "productId,asc") String[] sort,
             @RequestParam(required = false) Long categoryId) {
-
+ 
         String sortField = sort[0];
         Sort.Direction dir = (sort.length > 1 && sort[1].equalsIgnoreCase("desc"))
                 ? Sort.Direction.DESC : Sort.Direction.ASC;

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import me.truong.services.IStorageService;
 
 @RestController
-@RequestMapping("/images")
+@RequestMapping("/imageResources")
 public class ImageController {
 
     @Autowired

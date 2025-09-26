@@ -1,25 +1,32 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8" />
     <title>Product</title>
+
+    <!-- CSS -->
     <link th:href="@{/css/bootstrap.css}" rel="stylesheet" />
+
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
-        $(document).ready(function() {
-            // Load categories
+        $(document).ready(function () {
+            // Gọi API để load category ngay khi trang sẵn sàng
             loadCategories();
-            
-            $('#product-form').submit(function(e) {
+
+            // Submit form add/edit product
+            $('#product-form').submit(function (e) {
                 e.preventDefault();
 
-                let formData = new FormData(this);
-                let url = '/api/product';
-                let method = 'POST';
-                const isEdit = $('#isEdit').val() === 'true';
-                if (isEdit) {
-                    url += '/' + $('#productId').val();
-                    method = 'PUT';
+                const formData = new FormData(this);
+                let   url      = '/api/product';
+                let   method   = 'POST';
+
+                if ($('#isEdit').val() === 'true') {
+                    url    += '/' + $('#productId').val();
+                    method  = 'PUT';
                 }
 
                 $.ajax({
@@ -28,102 +35,152 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function(response) {
+                    success: function (response) {
                         alert(response.message);
                         window.location.href = '/admin/products';
                     },
-                    error: function(error) {
+                    error: function (error) {
                         console.error("Error saving product", error);
-                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
+                        alert("Error: " +
+                            (error.responseJSON ? error.responseJSON.message : error.statusText));
                     }
                 });
             });
         });
-        
+
+        /** Load danh sách category và gán vào <select> */
         function loadCategories() {
             $.ajax({
                 url: '/api/category',
                 method: 'GET',
-                success: function(response) {
+                success: function (response) {
                     const categorySelect = $('#categoryId');
-                    categorySelect.empty();
-                    categorySelect.append('<option value="">Select Category</option>');
-                    
+                    categorySelect.empty()
+                                  .append('<option value="">Select Category</option>');
+
+                    console.log(response); // kiểm tra cấu trúc JSON
+
+                    // API trả { success, message, data(Page<Category>) }
                     if (response.data && response.data.content) {
-                        response.data.content.forEach(function(category) {
-                            const selected = $('#selectedCategoryId').val() == category.categoryId ? 'selected' : '';
-                            categorySelect.append(`<option value="${category.categoryId}" ${selected}>${category.categoryName}</option>`);
+                        response.data.content.forEach(function (category) {
+                            const selected =
+                                $('#selectedCategoryId').val() == category.categoryId ? 'selected' : '';
+                            categorySelect.append(
+                                `<option value="${category.categoryId}" ${selected}>
+                                    ${category.categoryName}
+                                 </option>`
+                            );
                         });
                     }
                 },
-                error: function(error) {
+                error: function (error) {
                     console.error("Error loading categories", error);
                 }
             });
         }
     </script>
 </head>
+
 <body>
-    <header th:replace="~{admin/fragments/header :: header}"></header>
-    <main layout:fragment="content">
-        <h1>Add/Edit Product</h1>
-        <form id="product-form" enctype="multipart/form-data">
-            <input type="hidden" id="isEdit" th:value="${product != null and product.productId != null ? 'true' : 'false'}" />
-            <input type="hidden" id="productId" th:value="${product != null ? product.productId : ''}" />
-            <input type="hidden" id="selectedCategoryId" th:value="${product != null and product.category != null ? product.category.categoryId : ''}" />
+<header th:replace="~{admin/fragments/header :: header}"></header>
 
-            <div class="form-group">
-                <label for="productName">Product Name</label>
-                <input type="text" id="productName" name="productName" class="form-control" th:value="${product != null ? product.productName : ''}" required />
-            </div>
+<main layout:fragment="content" class="container my-4">
+    <h1 class="mb-4">Add / Edit Product</h1>
 
-            <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" id="quantity" name="quantity" class="form-control" th:value="${product != null ? product.quantity : ''}" required />
-            </div>
+    <form id="product-form" enctype="multipart/form-data" class="needs-validation">
 
-            <div class="form-group">
-                <label for="unitPrice">Unit Price</label>
-                <input type="number" step="0.01" id="unitPrice" name="unitPrice" class="form-control" th:value="${product != null ? product.unitPrice : ''}" required />
-            </div>
+        <!-- Hidden fields -->
+        <input type="hidden" id="isEdit"
+               th:value="${product != null and product.productId != null ? 'true' : 'false'}" />
+        <input type="hidden" id="productId"
+               th:value="${product != null ? product.productId : ''}" />
+        <input type="hidden" id="selectedCategoryId"
+               th:value="${product != null and product.category != null ? product.category.categoryId : ''}" />
 
-            <div class="form-group">
-                <label for="images">Images</label>
-                <input type="file" id="images" name="imagesFile" class="form-control" accept="image/*" />
-                <small class="form-text text-muted" th:if="${product != null and product.images != null}">
-                    Current image: <span th:text="${product.images}"></span>
-                </small>
-            </div>
+        <!-- Product Name -->
+        <div class="form-group mb-3">
+            <label for="productName">Product Name</label>
+            <input type="text" id="productName" name="productName"
+                   class="form-control"
+                   th:value="${product != null ? product.productName : ''}" required />
+        </div>
 
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" class="form-control" th:text="${product != null ? product.description : ''}" required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="discount">Discount</label>
-                <input type="number" step="0.01" id="discount" name="discount" class="form-control" th:value="${product != null ? product.discount : 0}" />
-            </div>
+        <!-- Quantity -->
+        <div class="form-group mb-3">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" name="quantity"
+                   class="form-control"
+                   th:value="${product != null ? product.quantity : ''}" required />
+        </div>
 
-            <div class="form-group">
-                <label for="categoryId">Category</label>
-                <select id="categoryId" name="categoryId" class="form-control" required>
-                    <option value="">Select Category</option>
-                </select>
-            </div>
+        <!-- Unit Price -->
+        <div class="form-group mb-3">
+            <label for="unitPrice">Unit Price</label>
+            <input type="number" step="0.01" id="unitPrice" name="unitPrice"
+                   class="form-control"
+                   th:value="${product != null ? product.unitPrice : ''}" required />
+        </div>
 
-            <div class="form-group">
-                <p>Status</p>
-                <input type="radio" id="status-active" name="status" value="1" th:checked="${product == null or product.status == 1}" />
-                <label for="status-active">Active</label>
-                <input type="radio" id="status-inactive" name="status" value="0" th:checked="${product != null and product.status == 0}" />
-                <label for="status-inactive">Inactive</label>
-            </div>
+        <!-- Image Upload -->
+        <div class="form-group mb-3">
+            <label for="images">Images</label>
+            <input type="file" id="images" name="imagesFile"
+                   class="form-control" accept="image/*" />
+            <small class="form-text text-muted"
+                   th:if="${product != null and product.images != null}">
+                Current image:
+                <span th:text="${product.images}"></span>
+            </small>
+        </div>
 
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a th:href="@{/admin/products}" class="btn btn-secondary">Cancel</a>
-        </form>
-    </main>
-    <footer th:replace="~{admin/fragments/footer :: footer}"></footer>
+        <!-- Description -->
+        <div class="form-group mb-3">
+            <label for="description">Description</label>
+            <textarea id="description" name="description"
+                      class="form-control"
+                      th:text="${product != null ? product.description : ''}" required>
+            </textarea>
+        </div>
+
+        <!-- Discount -->
+        <div class="form-group mb-3">
+            <label for="discount">Discount</label>
+            <input type="number" step="0.01" id="discount" name="discount"
+                   class="form-control"
+                   th:value="${product != null ? product.discount : 0}" />
+        </div>
+
+        <!-- Category Select -->
+        <div class="form-group mb-3">
+            <label for="categoryId">Category</label>
+            <select id="categoryId" name="categoryId" class="form-control" required>
+                <option value="">Select Category</option>
+            </select>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group mb-4">
+            <label class="d-block mb-1">Status</label>
+            <div class="form-check form-check-inline">
+                <input type="radio" id="status-active" name="status" value="1"
+                       class="form-check-input"
+                       th:checked="${product == null or product.status == 1}" />
+                <label for="status-active" class="form-check-label">Active</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input type="radio" id="status-inactive" name="status" value="0"
+                       class="form-check-input"
+                       th:checked="${product != null and product.status == 0}" />
+                <label for="status-inactive" class="form-check-label">Inactive</label>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a th:href="@{/admin/products}" class="btn btn-secondary">Cancel</a>
+    </form>
+</main>
+
+<footer th:replace="~{admin/fragments/footer :: footer}"></footer>
 </body>
 </html>
