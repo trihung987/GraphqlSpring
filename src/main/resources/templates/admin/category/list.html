@@ -87,16 +87,39 @@
     <script>
         function deleteCategory(id, name) {
             if (confirm('Are you sure you want to delete category: ' + name + ' ?')) {
+                const mutation = `
+                    mutation deleteCategory($id: ID!) {
+                        deleteCategory(id: $id)
+                    }
+                `;
+
+                const variables = {
+                    id: id
+                };
+
                 $.ajax({
-                    url: '/api/category/' + id,
-                    method: 'DELETE',
+                    url: '/graphql',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        query: mutation,
+                        variables: variables
+                    }),
                     success: function (response) {
-                        alert(response.message);
-                        location.reload();
+                        if (response.errors) {
+                            alert("Error: " + response.errors[0].message);
+                        } else if (response.data.deleteCategory) {
+                            alert("Category deleted successfully!");
+                            location.reload();
+                        } else {
+                            alert("Error deleting category");
+                        }
                     },
                     error: function (error) {
                         console.error("Error deleting category", error);
-                        alert("Error: " + (error.responseJSON ? error.responseJSON.message : error.statusText));
+                        alert("Error deleting category: " + error.responseText);
                     }
                 });
             }
