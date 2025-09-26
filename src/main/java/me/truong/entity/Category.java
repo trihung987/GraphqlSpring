@@ -29,7 +29,6 @@ public class Category implements Serializable {
 	private String categoryName;
 	private String icon;
 	 private Integer status;
-	@JsonIgnore
 	@OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
 	private Set<Product> products;
 }

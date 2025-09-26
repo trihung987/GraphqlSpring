@@ -28,7 +28,7 @@ public class CategoryServiceImpl implements ICategoryService {
 		} else {
 			Optional<Category> opt = findById(entity.getCategoryId());
 			if (opt.isPresent()) {
-				if (StringUtils.isEmpty(entity.getIcon())) {
+					if (!StringUtils.hasText(entity.getIcon())) {
 					entity.setIcon(opt.get().getIcon());
 				} else {
 //lấy lại images cũ

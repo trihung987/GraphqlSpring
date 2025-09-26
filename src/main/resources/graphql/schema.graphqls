@@ -1,0 +1,93 @@
+scalar Date
+scalar Upload
+
+type Product {
+    productId: ID!
+    productName: String!
+    quantity: Int!
+    unitPrice: Float!
+    images: String
+    description: String!
+    discount: Float!
+    createDate: Date
+    status: Int!
+    category: Category!
+}
+
+type Category {
+    categoryId: ID!
+    categoryName: String!
+    icon: String
+    status: Int
+    products: [Product!]
+}
+
+type ProductPage {
+    content: [Product!]!
+    totalElements: Int!
+    totalPages: Int!
+    size: Int!
+    number: Int!
+    first: Boolean!
+    last: Boolean!
+}
+
+type CategoryPage {
+    content: [Category!]!
+    totalElements: Int!
+    totalPages: Int!
+    size: Int!
+    number: Int!
+    first: Boolean!
+    last: Boolean!
+}
+
+input ProductInput {
+    productName: String!
+    quantity: Int!
+    unitPrice: Float!
+    description: String!
+    discount: Float!
+    status: Int!
+    categoryId: ID!
+}
+
+input ProductUpdateInput {
+    productName: String
+    quantity: Int
+    unitPrice: Float
+    description: String
+    discount: Float
+    status: Int
+    categoryId: ID
+}
+
+input CategoryInput {
+    categoryName: String!
+}
+
+input CategoryUpdateInput {
+    categoryName: String
+}
+
+type Query {
+    # Product queries
+    products(page: Int = 0, size: Int = 10, sort: String = "productId", direction: String = "ASC", categoryId: ID): ProductPage!
+    product(id: ID!): Product
+    
+    # Category queries
+    categories(page: Int = 0, size: Int = 10, sort: String = "categoryId", direction: String = "ASC"): CategoryPage!
+    category(id: ID!): Category
+}
+
+type Mutation {
+    # Product mutations
+    createProduct(input: ProductInput!, image: Upload): Product!
+    updateProduct(id: ID!, input: ProductUpdateInput!, image: Upload): Product!
+    deleteProduct(id: ID!): Boolean!
+    
+    # Category mutations
+    createCategory(input: CategoryInput!, icon: Upload): Category!
+    updateCategory(id: ID!, input: CategoryUpdateInput!, icon: Upload): Category!
+    deleteCategory(id: ID!): Boolean!
+}
